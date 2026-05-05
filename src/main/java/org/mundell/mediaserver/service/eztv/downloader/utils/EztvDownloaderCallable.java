@@ -31,7 +31,7 @@ public class EztvDownloaderCallable implements Callable<Boolean> {
 
     private final String targetDirectory;
     private final String seriesDestination;
-    private final EztvDownloaderQueue queue;
+    private EztvDownloaderQueue queue;
     private final EztvDownloaderQueueRepository downloaderQueueRepository;
 
     public EztvDownloaderCallable(String downloadTarget,
@@ -51,7 +51,7 @@ public class EztvDownloaderCallable implements Callable<Boolean> {
             log.warn("No magnet URL for queue entry '{}' — skipping", queue.getTitle());
             queue.setStatus(DownloadStatusCodes.FAILED.getStatus());
             queue.setError("No magnet URL available");
-            downloaderQueueRepository.save(queue);
+            queue = downloaderQueueRepository.save(queue);
             return false;
         }
 
@@ -62,7 +62,7 @@ public class EztvDownloaderCallable implements Callable<Boolean> {
         try {
             log.debug("Starting download: {}", queue.getTitle());
             queue.setStatus(DownloadStatusCodes.PROCESSING.getStatus());
-            downloaderQueueRepository.save(queue);
+            queue = downloaderQueueRepository.save(queue);
 
             downloader.magnetDownload(magnet, new DownloadListener() {
 
@@ -75,7 +75,7 @@ public class EztvDownloaderCallable implements Callable<Boolean> {
                 public void update(TorrentSessionState state) {
                     double pct = (((double) state.getPiecesComplete()) / state.getPiecesTotal()) * 100;
                     queue.setProgress(Double.parseDouble(df.format(pct)));
-                    downloaderQueueRepository.save(queue);
+                    queue = downloaderQueueRepository.save(queue);
                     log.debug("{}: peers={}, progress={}%",
                             queue.getTitle(), state.getConnectedPeers().size(), df.format(pct));
                 }
@@ -86,14 +86,14 @@ public class EztvDownloaderCallable implements Callable<Boolean> {
                     moveMedia(torrentFile.getName(), queue.getTitle(), torrentFile);
                     queue.setStatus(DownloadStatusCodes.COMPLETED.getStatus());
                     queue.setError(DownloadStatusCodes.COMPLETED.toString());
-                    downloaderQueueRepository.save(queue);
+                    queue = downloaderQueueRepository.save(queue);
                 }
             });
         } catch (Exception e) {
             log.error("Download failed for '{}': {}", queue.getTitle(), e.getMessage());
             queue.setStatus(DownloadStatusCodes.FAILED.getStatus());
             queue.setError(e.getMessage());
-            downloaderQueueRepository.save(queue);
+            queue = downloaderQueueRepository.save(queue);
         }
 
         return false;
