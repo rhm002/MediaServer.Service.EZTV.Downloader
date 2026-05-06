@@ -85,7 +85,7 @@ public class EztvDownloaderCallable implements Callable<Boolean> {
                     log.debug("Completed: {}", queue.getTitle());
                     moveMedia(torrentFile.getName(), queue.getTitle(), torrentFile);
                     queue.setStatus(DownloadStatusCodes.COMPLETED.getStatus());
-                    queue.setError(DownloadStatusCodes.COMPLETED.toString());
+                    queue.setError(null);
                     queue = downloaderQueueRepository.save(queue);
                 }
             });
