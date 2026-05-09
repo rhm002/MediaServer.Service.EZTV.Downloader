@@ -1,0 +1,15 @@
+# =============================================================================
+# .dockerignore — MediaServer.Service.EZTV.Downloader
+#
+# Build context: each service directory (cd <dir> && docker build .)
+# Only the pre-built JAR is needed; exclude everything else.
+# =============================================================================
+
+# Ignore everything by default
+**
+
+# Allow Docker to traverse the target directory
+!target/
+
+# Allow only the final Spring Boot JAR
+!target/*.jar
