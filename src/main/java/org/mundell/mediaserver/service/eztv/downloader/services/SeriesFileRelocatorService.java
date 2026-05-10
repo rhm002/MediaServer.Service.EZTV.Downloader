@@ -76,6 +76,19 @@ public class SeriesFileRelocatorService {
             }
         }
 
+        File[] remainingFiles = source.toFile().listFiles(File::isFile);
+        if (remainingFiles != null) {
+            for (File file : remainingFiles) {
+                Path dest = target.resolve(file.getName());
+                try {
+                    Files.move(file.toPath(), dest, StandardCopyOption.REPLACE_EXISTING);
+                    log.info("Relocated companion file '{}' → '{}'", file.getAbsolutePath(), dest);
+                } catch (IOException e) {
+                    log.warn("Failed to move companion file '{}' to '{}': {}", file.getAbsolutePath(), dest, e.getMessage(), e);
+                }
+            }
+        }
+
         try {
             FileUtils.deleteDirectory(source.toFile());
             log.debug("Cleaned up staging folder: {}", source);
