@@ -19,6 +19,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -48,6 +49,16 @@ public class EztvDownloadService {
         if (!stuck.isEmpty()) {
             downloaderQueueRepository.saveAll(stuck);
             log.warn("Reset {} stuck PROCESSING entries to NEW on startup", stuck.size());
+        }
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        List<EztvDownloaderQueue> processing = downloaderQueueRepository.findAllByStatus(DownloadStatusCodes.PROCESSING.getStatus());
+        processing.forEach(q -> q.setStatus(DownloadStatusCodes.NEW.getStatus()));
+        if (!processing.isEmpty()) {
+            downloaderQueueRepository.saveAll(processing);
+            log.warn("Shutdown: reset {} in-progress download(s) to NEW for pickup on next start", processing.size());
         }
     }
 
