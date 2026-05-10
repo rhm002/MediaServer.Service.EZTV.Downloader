@@ -1,17 +1,5 @@
 package org.mundell.mediaserver.service.eztv.downloader.utils;
 
-import bt.metainfo.Torrent;
-import bt.metainfo.TorrentFile;
-import bt.torrent.TorrentSessionState;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-import org.mundell.mediaserver.eztv.dal.models.EztvDownloaderQueue;
-import org.mundell.mediaserver.eztv.dal.repositories.EztvDownloaderQueueRepository;
-import org.mundell.mediaserver.yts.dal.common.DownloadStatusCodes;
-import org.mundell.mediaserver.yts.dal.listeners.DownloadListener;
-import org.mundell.mediaserver.yts.dal.utils.BitlyDownloader;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -22,6 +10,19 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.mundell.mediaserver.eztv.dal.models.EztvDownloaderQueue;
+import org.mundell.mediaserver.eztv.dal.repositories.EztvDownloaderQueueRepository;
+import org.mundell.mediaserver.yts.dal.common.DownloadStatusCodes;
+import org.mundell.mediaserver.yts.dal.listeners.DownloadListener;
+import org.mundell.mediaserver.yts.dal.utils.BitlyDownloader;
+
+import bt.metainfo.Torrent;
+import bt.metainfo.TorrentFile;
+import bt.torrent.TorrentSessionState;
+import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 public class EztvDownloaderCallable implements Callable<Boolean> {
 
@@ -30,16 +31,13 @@ public class EztvDownloaderCallable implements Callable<Boolean> {
     );
 
     private final String targetDirectory;
-    private final String seriesDestination;
     private EztvDownloaderQueue queue;
     private final EztvDownloaderQueueRepository downloaderQueueRepository;
 
     public EztvDownloaderCallable(String downloadTarget,
-                                   String seriesDestination,
                                    EztvDownloaderQueue queue,
                                    EztvDownloaderQueueRepository downloaderQueueRepository) {
         this.targetDirectory         = downloadTarget;
-        this.seriesDestination       = seriesDestination;
         this.queue                   = queue;
         this.downloaderQueueRepository = downloaderQueueRepository;
     }
@@ -101,7 +99,7 @@ public class EztvDownloaderCallable implements Callable<Boolean> {
 
     private void moveMedia(String source, String destination, Torrent torrentFile) {
         var sourceFolder      = Paths.get(this.targetDirectory, source).toFile();
-        var destinationFolder = Paths.get(this.seriesDestination, destination).toFile();
+        var destinationFolder = Paths.get(this.targetDirectory, destination).toFile();
 
         if (!destinationFolder.exists()) {
             destinationFolder.mkdirs();

@@ -1,8 +1,14 @@
 package org.mundell.mediaserver.service.eztv.downloader.services;
 
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
+
+import org.apache.commons.io.FileUtils;
 import org.mundell.mediaserver.eztv.dal.models.EztvDownloaderQueue;
 import org.mundell.mediaserver.eztv.dal.repositories.EztvDownloaderQueueRepository;
 import org.mundell.mediaserver.service.eztv.downloader.configs.MediaServerConfiguration;
@@ -12,11 +18,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Semaphore;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
@@ -28,6 +32,7 @@ public class EztvDownloadService {
 
     private final EztvDownloaderQueueRepository downloaderQueueRepository;
     private final MediaServerConfiguration config;
+    private final SeriesFileRelocatorService seriesFileRelocator;
 
     private Semaphore semaphore;
     private ExecutorService executor;
@@ -66,7 +71,8 @@ public class EztvDownloadService {
                 log.info("All {} download slots in use — deferring {} remaining item(s)", maxConcurrent, pending.size());
                 break;
             }
-            EztvDownloaderCallable callable = new EztvDownloaderCallable(downloadTarget, seriesDestination, item, downloaderQueueRepository);
+            cleanStagingFolder(downloadTarget, item.getTitle());
+            EztvDownloaderCallable callable = new EztvDownloaderCallable(downloadTarget, item, downloaderQueueRepository);
             CompletableFuture.supplyAsync(() -> {
                 try {
                     return callable.call();
@@ -74,7 +80,24 @@ public class EztvDownloadService {
                     log.error("Unhandled download error for '{}': {}", item.getTitle(), e.getMessage(), e);
                     return false;
                 }
-            }, executor).whenComplete((v, ex) -> semaphore.release());
+            }, executor).whenComplete((result, ex) -> {
+                semaphore.release();
+                if (Boolean.TRUE.equals(result)) {
+                    seriesFileRelocator.relocate(downloadTarget, seriesDestination, item.getTitle());
+                }
+            });
+        }
+    }
+
+    private void cleanStagingFolder(String downloadTarget, String title) {
+        File stagingFolder = new File(downloadTarget, title);
+        if (stagingFolder.exists()) {
+            log.info("Cleaning existing staging folder before download: {}", stagingFolder.getAbsolutePath());
+            try {
+                FileUtils.forceDelete(stagingFolder);
+            } catch (IOException e) {
+                log.warn("Failed to clean staging folder '{}': {}", stagingFolder.getAbsolutePath(), e.getMessage());
+            }
         }
     }
 }
