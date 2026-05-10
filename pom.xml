@@ -10,14 +10,12 @@
     <packaging>jar</packaging>
 
     <properties>
-        <flyway.version>12.5.0</flyway.version>
         <finalName>MediaServer.Service.EZTV.Downloader</finalName>
         <jdk.version>25</jdk.version>
         <java.version>25</java.version>
-        <maven.compiler.source>25</maven.compiler.source>
-        <maven.compiler.target>25</maven.compiler.target>
         <postgresql.version>42.7.5</postgresql.version>
         <bt.version>1.10</bt.version>
+        <lombok.version>1.18.44</lombok.version>
     </properties>
 
     <parent>
@@ -43,24 +41,16 @@
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>
-            <version>${flyway.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-sqlserver</artifactId>
-            <version>${flyway.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-mysql</artifactId>
-            <version>${flyway.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
         </dependency>
 
         <dependency>
@@ -174,12 +164,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-            <version>2.0</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.github.atomashpolskiy</groupId>
             <artifactId>bt-core</artifactId>
             <version>${bt.version}</version>
@@ -208,7 +192,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.2</version>
+                <version>3.5.5</version>
                 <configuration>
                     <skipTests>true</skipTests>
                 </configuration>
@@ -216,10 +200,8 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.14.1</version>
+                <version>3.15.0</version>
                 <configuration>
-                    <source>${jdk.version}</source>
-                    <target>${jdk.version}</target>
                     <release>${jdk.version}</release>
                     <annotationProcessorPaths>
                         <path>
