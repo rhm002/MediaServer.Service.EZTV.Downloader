@@ -23,6 +23,6 @@ WORKDIR /media
 
 ENV SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
 
-COPY target/*.jar app.jar
+COPY MediaServer.Service.EZTV.Downloader/target/*.jar app.jar
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
